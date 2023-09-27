@@ -1,106 +1,18 @@
-import { useEffect, useReducer, useState } from "react";
-import { Footer } from "./components/Footer/Footer";
-import { FormularioTareas } from "./components/FormularioTareas/FormularioTareas";
-import { Header } from "./components/Header/Header";
-import { RegistroTareas } from "./components/RegistroTareas/RegistroTareas";
-import { tareaReducer } from "./reducers/tareaReducer";
-import Swal from 'sweetalert2';
+import { useEffect } from "react";
+import { RegistroTareas, Footer, FormularioTareas, Header } from "./components";
+import { useCrud, useForm, useProgress } from "./hooks";
 
 export const App = () => {
-  const init = () => {
-    return JSON.parse(localStorage.getItem("tareas")) || [];
-  };
 
-  const [state, dispatch] = useReducer(tareaReducer, [], init);
 
-  const [descripcion, setDescripcion] = useState("");
+  const [ descripcion, handleInputChange, setDescripcion ] = useForm("");
+  const { tareas, handleSubmit, handelCambiar, handelEliminar } = useCrud(descripcion, setDescripcion);
+
+  const porcentaje = useProgress(tareas)
 
   useEffect(() => {
-    localStorage.setItem("tareas", JSON.stringify(state));
-  }, [state]);
-
-  const handleInputChange = (evento) => {
-    setDescripcion(evento.target.value);
-    console.log(descripcion);
-  };
-
-  const handleSubmit = (evento) => {
-    evento.preventDefault();
-
-    // Verificar si la descripción está vacía antes de agregar la tarea
-    if (descripcion.trim() === "") {
-      // Mostrar un SweetAlert de error
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No puedes agregar vacios",
-      });
-      return;
-    }
-
-    const tareaNueva = {
-      id: new Date().getTime(),
-      descripcion: descripcion,
-      realizado: false,
-    };
-
-    const action = {
-      type: "agregar",
-      payload: tareaNueva,
-    };
-    dispatch(action);
-    //limpiar formulario
-    setDescripcion("");
-  };
-
-  const handelCambiar = (id) => {
-    dispatch({
-      type: "cambiar",
-      payload: id,
-    });
-  };
-  // const handelEliminar = (id) => {
-  //   dispatch({
-  //     type: "borrar",
-  //     payload: id,
-  //   });
-  // };
-
-  const handelEliminar = (id) => {
-    // Mostrar SweetAlert de confirmación antes de eliminar
-    Swal.fire({
-      title: '¿Estás seguro?',
-      text: "No podrás revertir la tarea.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminarlo'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        dispatch({
-          type: 'borrar',
-          payload: id
-        });
-        Swal.fire(
-          '¡Eliminado!',
-          'La tarea ha sido eliminada satisfactoriamente.',
-          'success'
-        );
-      }
-    });
-  };
-  
-
-  let terminadas = 0;
-
-  for (let i = 0; i < state.length; i++) {
-    if (state[i].realizado === true) {
-      terminadas++;
-    }
-  }
-
-  let porcentaje = terminadas / state.length;
+    localStorage.setItem("tareas", JSON.stringify(tareas));
+  }, [tareas]);
 
   //lamando componente header
   return (
@@ -125,7 +37,7 @@ export const App = () => {
           </div>
           <div className="col-md-9 col-xs-12 mt-4">
             <div className="row row-cols-1 row-cols-md-3 g-4">
-              {state.map((tarea, index) => {
+              {tareas.map((tarea, index) => {
                 return (
                   <RegistroTareas
                     key={tarea.id}
